@@ -1,24 +1,1038 @@
-// Example form submission snippet inside your index.html script:
-async function handleFormSubmit(event) {
-  event.preventDefault();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rosalia • Automated Discord Remodeling Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #1e1e20;
+      --bg-card: #27272a;
+      --bg-card-hover: #323236;
+      --accent-blush-light: #f2d5d8;
+      --accent-blush: #e8c5c8;
+      --accent-rose: #c98b8b;
+      --accent-dark-rose: #a66868;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --border-color: #3f3f46;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
 
-  const formData = {
-    discordUser: document.getElementById('discordUser').value,
-    serverName: document.getElementById('serverName').value,
-    serviceType: document.getElementById('serviceType').value,
-    serverCategory: document.getElementById('serverCategory').value,
-    selectedBots: Array.from(document.querySelectorAll('input[name="bots"]:checked')).map(el => el.value),
-    extraNotes: document.getElementById('extraNotes').value
-  };
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-  const response = await fetch('/api/request', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData)
-  });
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
 
-  const result = await response.json();
-  if (result.success) {
-    alert(`🌹 Request Submitted! Your Ticket Code is: ${result.ticketCode}\n\n${result.instructions}`);
-  }
-}
+    /* Top Navigation Bar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2rem;
+      background: rgba(30, 30, 32, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--accent-blush);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .brand-icon {
+      font-size: 1.5rem;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--bg-card);
+      padding: 0.4rem 0.8rem;
+      border-radius: 30px;
+      border: 1px solid var(--border-color);
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: var(--accent-rose);
+    }
+
+    .user-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blush), var(--accent-rose));
+      color: var(--bg-dark);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--accent-blush);
+      border: 1px solid var(--accent-rose);
+    }
+
+    .btn-outline:hover {
+      background: rgba(232, 197, 200, 0.1);
+    }
+
+    .btn-admin {
+      background: var(--accent-rose);
+      color: #fff;
+      display: none; /* Controlled by auth */
+    }
+
+    .btn-discord-login {
+      background: #5865F2;
+      color: white;
+      padding: 0.85rem 1.75rem;
+      font-size: 1rem;
+      border-radius: var(--radius-md);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+    }
+
+    .btn-discord-login:hover {
+      background: #4752C4;
+      transform: translateY(-2px);
+    }
+
+    /* Mandatory OAuth Overlay */
+    .gate-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 15, 16, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    .gate-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 3rem 2.5rem;
+      border-radius: var(--radius-lg);
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .gate-card h1 {
+      color: var(--accent-blush);
+      font-size: 1.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .gate-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    /* Main Container & Layout */
+    .container {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      flex: 1;
+    }
+
+    .views-wrapper {
+      position: relative;
+    }
+
+    .view-panel {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out forwards;
+    }
+
+    .view-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Dashboard Hub (3 Action Buttons) */
+    .hero-section {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .hero-section h1 {
+      font-size: 2.75rem;
+      color: var(--accent-blush);
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .hero-section p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.75rem;
+    }
+
+    .action-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      text-align: left;
+      transition: all 0.25 ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-blush), var(--accent-rose));
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .action-card:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-4px);
+      border-color: var(--accent-rose);
+      box-shadow: var(--shadow);
+    }
+
+    .action-card:hover::before {
+      opacity: 1;
+    }
+
+    .action-card-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .action-card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+
+    .action-card h3 {
+      font-size: 1.35rem;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .action-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .action-card-btn {
+      margin-top: 1.5rem;
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Page Questionnaire & Forms */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-title {
+      font-size: 1.75rem;
+      color: var(--accent-blush);
+    }
+
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .form-group {
+      margin-bottom: 1.75rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-rose);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--bg-dark);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      accent-color: var(--accent-rose);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Ticket Confirmation Screen */
+    .ticket-result-card {
+      display: none;
+      background: var(--bg-card);
+      border: 2px dashed var(--accent-rose);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .ticket-code-badge {
+      display: inline-block;
+      background: rgba(232, 197, 200, 0.15);
+      color: var(--accent-blush);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 0.5rem 1.5rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--accent-rose);
+      margin: 1rem 0;
+    }
+
+    .template-box {
+      background: var(--bg-dark);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .template-box a {
+      color: var(--accent-blush);
+      word-break: break-all;
+    }
+
+    /* Live Progress Tracker */
+    .tracker-search-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tracker-display {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+    }
+
+    .progress-bar-container {
+      background: var(--bg-dark);
+      border-radius: 20px;
+      height: 20px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-rose), var(--accent-blush));
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .checklist-group {
+      margin-top: 2rem;
+    }
+
+    .checklist-item-display {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: var(--bg-dark);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .checklist-item-display.completed {
+      border-color: rgba(232, 197, 200, 0.4);
+      background: rgba(232, 197, 200, 0.05);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-color);
+    }
+
+    .completed .status-dot {
+      background: var(--accent-blush);
+      box-shadow: 0 0 8px var(--accent-blush);
+    }
+
+    /* Admin View */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .admin-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+    }
+
+    .admin-request-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Feedback Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.6;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: var(--bg-dark);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mandatory Discord OAuth Gate -->
+  <div id="mandatory-discord-gate" class="gate-overlay">
+    <div class="gate-card">
+      <h1>🌹 Welcome to Rosalia</h1>
+      <p>Please connect your Discord account to access the client dashboard, request remodels, or view live progress.</p>
+      <button onclick="window.location.href='/api/auth/discord/login'" class="btn-discord-login">
+        <svg width="20" height="20" viewBox="0 0 127.14 96.36" fill="currentColor">
+          <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a73.57,73.57,0,0,0,64.32,0c.87.69,1.76,1.37,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,45.91,53.87,53,48.8,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,45.91,96.1,53,91,65.69,84.69,65.69Z"/>
+        </svg>
+        Connect with Discord
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a class="brand" onclick="switchView('hub-view')">
+      <span class="brand-icon">🌹</span>
+      <span>ROSALIA</span>
+    </a>
+    <div class="nav-actions">
+      <button id="admin-nav-btn" class="btn btn-admin" onclick="switchView('admin-view')">
+        ⚙️ Admin Panel
+      </button>
+      <div class="user-profile">
+        <img id="user-avatar" class="user-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
+        <span id="user-profile-tag" class="user-name">Guest</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Application Body -->
+  <main class="container">
+    <div class="views-wrapper">
+
+      <!-- VIEW 1: Dashboard Hub (Default) -->
+      <section id="hub-view" class="view-panel active">
+        <div class="hero-section">
+          <h1>Discord Architecture & Remodeling</h1>
+          <p>Automated server setup, aesthetic styling, and live project tracking for modern Discord communities.</p>
+        </div>
+
+        <div class="action-grid">
+          <!-- Button Card 1: Submit Request -->
+          <div class="action-card" onclick="switchView('request-view')">
+            <div class="action-card-header">
+              <span class="action-card-icon">🛠️</span>
+              <h3>Submit Server Request</h3>
+              <p>Configure channel aesthetics, select requested bot integrations, and kick off your server build.</p>
+            </div>
+            <button class="btn btn-primary action-card-btn">Start Questionnaire →</button>
+          </div>
+
+          <!-- Button Card 2: Live Progress Tracker -->
+          <div class="action-card" onclick="switchView('tracker-view')">
+            <div class="action-card-header">
+              <span class="action-card-icon">📊</span>
+              <h3>Live Request Tracker</h3>
+              <p>Track your server remodel in real time with your ticket code and verified username.</p>
+            </div>
+            <button class="btn btn-outline action-card-btn">Track Progress →</button>
+          </div>
+
+          <!-- Button Card 3: Feedback & Reviews -->
+          <div class="action-card" onclick="switchView('feedback-view')">
+            <div class="action-card-header">
+              <span class="action-card-icon">💬</span>
+              <h3>Feedback & Reviews</h3>
+              <p>Leave a review for completed remodels and read experience logs from other server owners.</p>
+            </div>
+            <button class="btn btn-outline action-card-btn">View Reviews →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: Full Page Request Questionnaire -->
+      <section id="request-view" class="view-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">🌹 Server Request Questionnaire</h2>
+          <button class="btn btn-outline" onclick="switchView('hub-view')">← Back to Dashboard</button>
+        </div>
+
+        <form id="requestForm" class="form-card">
+          <div class="form-group">
+            <label for="serverName">Server Name</label>
+            <input type="text" id="serverName" class="form-control" placeholder="e.g. Moonlight Lounge" required>
+          </div>
+
+          <div class="form-group">
+            <label for="serviceType">Service Type</label>
+            <select id="serviceType" class="form-control">
+              <option value="Server Remodel">Server Remodel (Existing Server)</option>
+              <option value="Brand New Server">Brand New Server (Auto-Generate Template)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="serverCategory">Server Category / Theme</label>
+            <select id="serverCategory" class="form-control">
+              <option value="Community">Community & Gaming</option>
+              <option value="Creator">Creator / Streamer Hub</option>
+              <option value="Aesthetic">Aesthetic Lounge</option>
+              <option value="Business">Business & Professional</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="channelStyle">Channel Naming Style</label>
+            <select id="channelStyle" class="form-control">
+              <option value="Minimalist Aesthetic">Minimalist Aesthetic (e.g. ─── 💬・general ───)</option>
+              <option value="Clean Symbols">Clean Symbols (e.g. ┆ 💬 General)</option>
+              <option value="Lowercase Clean">Lowercase Clean (e.g. general-chat)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Requested Bot Integrations (Tick all that apply)</label>
+            <div class="checkbox-grid">
+              <label class="checkbox-item">
+                <input type="checkbox" name="bots" value="Ticket Tool"> Ticket Tool
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="bots" value="Carl-bot"> Carl-bot
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="bots" value="Mimu"> Mimu
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="bots" value="Discord AutoMod"> Discord AutoMod
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="extraNotes">Extra Notes / Design Requests</label>
+            <textarea id="extraNotes" class="form-control" placeholder="Mention color schemes, specific roles, or channel layouts..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem;">
+            Submit Server Request
+          </button>
+        </form>
+
+        <!-- Dynamic Output Ticket Card -->
+        <div id="ticketResult" class="ticket-result-card">
+          <h2>🌹 Request Received!</h2>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">Your unique request code has been generated:</p>
+          <div id="ticketCodeDisplay" class="ticket-code-badge">#ROS-0000</div>
+          
+          <div style="background: var(--bg-dark); padding: 1.25rem; border-radius: var(--radius-md); margin-top: 1rem;">
+            <p style="font-weight: 600; color: var(--accent-blush); margin-bottom: 0.5rem;">📸 Next Step Instructions:</p>
+            <p id="ticketInstructions" style="font-size: 0.9rem; color: var(--text-muted);"></p>
+          </div>
+
+          <div id="templateBox" class="template-box" style="display: none;">
+            <p style="font-weight: 600; color: var(--accent-blush);">🔗 Auto-Generated Discord Server Template:</p>
+            <a id="templateLink" href="#" target="_blank">https://discord.new/...</a>
+          </div>
+
+          <button class="btn btn-outline" style="margin-top: 1.5rem;" onclick="switchView('tracker-view')">
+            Go to Live Tracker →
+          </button>
+        </div>
+      </section>
+
+      <!-- VIEW 3: Live Progress Tracker (2 Variables) -->
+      <section id="tracker-view" class="view-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">📊 Live Progress Tracker</h2>
+          <button class="btn btn-outline" onclick="switchView('hub-view')">← Back to Dashboard</button>
+        </div>
+
+        <div class="tracker-search-card">
+          <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Enter both your verified Discord username and ticket code to look up your server's live remodel progress.</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+              <label>Discord Username</label>
+              <input type="text" id="trackUsername" class="form-control" placeholder="e.g. urstruly.megs">
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label>Ticket Code</label>
+              <input type="text" id="trackTicketCode" class="form-control" placeholder="e.g. ROS-8492">
+            </div>
+            <button class="btn btn-primary" onclick="lookupProgress()">Verify & Lookup</button>
+          </div>
+        </div>
+
+        <div id="trackerDisplay" class="tracker-display">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 id="trackServerNameDisplay" style="font-size: 1.5rem; color: var(--accent-blush);">Server Name</h3>
+              <p id="trackTicketDisplay" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+            </div>
+            <div id="progressPercentDisplay" style="font-size: 2rem; font-weight: 700; color: var(--accent-rose);">0%</div>
+          </div>
+
+          <div class="progress-bar-container">
+            <div id="progressBarFill" class="progress-bar-fill"></div>
+          </div>
+
+          <div class="checklist-group">
+            <h4 style="margin-bottom: 1rem; color: var(--text-main);">Remodel Action Checklist</h4>
+            <div id="checklistItemsContainer">
+              <!-- Checklist populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: Feedback & Reviews -->
+      <section id="feedback-view" class="view-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">💬 Client Reviews & Feedback</h2>
+          <button class="btn btn-outline" onclick="switchView('hub-view')">← Back to Dashboard</button>
+        </div>
+
+        <div class="empty-state">
+          <div class="empty-state-icon">🌹</div>
+          <h3 style="color: var(--accent-blush); margin-bottom: 0.5rem;">No Reviews Yet</h3>
+          <p style="color: var(--text-muted); max-width: 450px; margin: 0 auto;">Client reviews will appear here once remodels are completed and delivered through the Rosalia portal.</p>
+        </div>
+      </section>
+
+      <!-- VIEW 5: Admin POV (Restricted to urstruly.megs) -->
+      <section id="admin-view" class="view-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">⚙️ Admin Control Hub (`urstruly.megs`)</h2>
+          <button class="btn btn-outline" onclick="switchView('hub-view')">← Back to Dashboard</button>
+        </div>
+
+        <div id="adminRequestsContainer" class="admin-grid">
+          <div class="empty-state">
+            <div class="empty-state-icon">📥</div>
+            <h3>No Active Requests</h3>
+            <p style="color: var(--text-muted);">Incoming requests submitted via the client portal will appear here for dynamic checklist updates and manual dispatching.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>Rosalia Discord Architecture Engine • Self-Hosted Node.js/Express System</p>
+  </footer>
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    // System State Storage
+    let currentUser = null;
+    let localRequests = [];
+
+    // 1. Initial Page Load & Discord OAuth Check
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const authStatus = urlParams.get('auth');
+      const username = urlParams.get('username');
+      const avatar = urlParams.get('avatar');
+
+      if (authStatus === 'success' && username) {
+        currentUser = { username, avatar: avatar || 'https://cdn.discordapp.com/embed/avatars/0.png' };
+        localStorage.setItem('rosalia_session', JSON.stringify(currentUser));
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        const savedSession = localStorage.getItem('rosalia_session');
+        if (savedSession) {
+          currentUser = JSON.parse(savedSession);
+        }
+      }
+
+      applyUserSession();
+    });
+
+    // 2. Apply Verified User Session
+    function applyUserSession() {
+      const gate = document.getElementById('mandatory-discord-gate');
+      const adminBtn = document.getElementById('admin-nav-btn');
+
+      if (currentUser && currentUser.username) {
+        gate.style.display = 'none';
+        document.getElementById('user-profile-tag').innerText = `@${currentUser.username}`;
+        document.getElementById('user-avatar').src = currentUser.avatar;
+
+        // Auto-fill username input in tracker
+        document.getElementById('trackUsername').value = currentUser.username;
+
+        // Strict Admin Verification for urstruly.megs
+        if (currentUser.username.toLowerCase() === 'urstruly.megs') {
+          adminBtn.style.display = 'inline-flex';
+        } else {
+          adminBtn.style.display = 'none';
+        }
+      } else {
+        gate.style.display = 'flex';
+      }
+    }
+
+    // 3. Navigation View Switcher
+    function switchView(viewId) {
+      document.querySelectorAll('.view-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+      const target = document.getElementById(viewId);
+      if (target) target.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 4. Request Questionnaire Submission
+    document.getElementById('requestForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (!currentUser) return alert("Please connect your Discord account first.");
+
+      const selectedBots = Array.from(document.querySelectorAll('input[name="bots"]:checked')).map(cb => cb.value);
+
+      const payload = {
+        discordUser: currentUser.username,
+        serverName: document.getElementById('serverName').value,
+        serviceType: document.getElementById('serviceType').value,
+        serverCategory: document.getElementById('serverCategory').value,
+        channelStyle: document.getElementById('channelStyle').value,
+        selectedBots: selectedBots,
+        extraNotes: document.getElementById('extraNotes').value
+      };
+
+      try {
+        const response = await fetch('/api/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('requestForm').style.display = 'none';
+          const resultCard = document.getElementById('ticketResult');
+          resultCard.style.display = 'block';
+
+          document.getElementById('ticketCodeDisplay').innerText = `#${result.ticketCode}`;
+          document.getElementById('ticketInstructions').innerText = result.instructions;
+
+          if (result.templateLink) {
+            const templateBox = document.getElementById('templateBox');
+            const templateLink = document.getElementById('templateLink');
+            templateBox.style.display = 'block';
+            templateLink.href = result.templateLink;
+            templateLink.innerText = result.templateLink;
+          }
+
+          // Save locally for prototype tracking state
+          localRequests.push({
+            ticketCode: result.ticketCode,
+            discordUser: currentUser.username,
+            serverName: payload.serverName,
+            progressPercent: 0,
+            checklist: [
+              { id: 1, task: "Clean & Audit Channel Structure", completed: false },
+              { id: 2, task: "Set Up Role Permissions & Colors", completed: false },
+              { id: 3, task: `Configure Bots (${selectedBots.join(', ') || 'Standard'})`, completed: false },
+              { id: 4, task: "Set Up Native Discord Onboarding", completed: false },
+              { id: 5, task: "Final Review & Client Handover", completed: false }
+            ]
+          });
+
+          renderAdminRequests();
+        } else {
+          alert(`Error: ${result.message}`);
+        }
+      } catch (err) {
+        console.error("Submission failed:", err);
+        alert("Server communication error.");
+      }
+    });
+
+    // 5. Live Progress Lookup (Requires Username + Ticket Code)
+    function lookupProgress() {
+      const user = document.getElementById('trackUsername').value.trim();
+      const ticket = document.getElementById('trackTicketCode').value.trim().toUpperCase().replace('#', '');
+
+      if (!user || !ticket) {
+        return alert("Please enter both your Discord Username and Ticket Code.");
+      }
+
+      const match = localRequests.find(r => 
+        r.discordUser.toLowerCase() === user.toLowerCase() && 
+        r.ticketCode.toUpperCase() === ticket
+      );
+
+      const trackerDisplay = document.getElementById('trackerDisplay');
+
+      if (match) {
+        trackerDisplay.style.display = 'block';
+        document.getElementById('trackServerNameDisplay').innerText = match.serverName;
+        document.getElementById('trackTicketDisplay').innerText = `Ticket Code: #${match.ticketCode} • Client: @${match.discordUser}`;
+        document.getElementById('progressPercentDisplay').innerText = `${match.progressPercent}%`;
+        document.getElementById('progressBarFill').style.width = `${match.progressPercent}%`;
+
+        const container = document.getElementById('checklistItemsContainer');
+        container.innerHTML = match.checklist.map(item => `
+          <div class="checklist-item-display ${item.completed ? 'completed' : ''}">
+            <div class="status-dot"></div>
+            <span style="font-size: 0.95rem; color: ${item.completed ? 'var(--text-main)' : 'var(--text-muted)'};">
+              ${item.task}
+            </span>
+          </div>
+        `).join('');
+      } else {
+        trackerDisplay.style.display = 'none';
+        alert("No matching active record found. Check your ticket code and username.");
+      }
+    }
+
+    // 6. Render Admin Request Control Cards
+    function renderAdminRequests() {
+      const container = document.getElementById('adminRequestsContainer');
+      if (localRequests.length === 0) return;
+
+      container.innerHTML = localRequests.map(req => `
+        <div class="admin-card">
+          <div class="admin-request-header">
+            <div>
+              <h3 style="color: var(--accent-blush);">${req.serverName} (#${req.ticketCode})</h3>
+              <p style="color: var(--text-muted); font-size: 0.9rem;">Client: @${req.discordUser}</p>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-rose);">${req.progressPercent}%</div>
+          </div>
+
+          <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Update Dynamic Task Checklist:</h4>
+          ${req.checklist.map(t => `
+            <label class="checkbox-item" style="margin-bottom: 0.5rem;">
+              <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleAdminTask('${req.ticketCode}',${t.id}, this.checked)">
+              <span>${t.task}</span>
+            </label>
+          `).join('')}
+
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Pre-Saved Manual Dispatcher:</h4>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="sendManual('${req.discordUser}', 'ticket_tool')">
+                📩 Send Ticket Tool Manual
+              </button>
+              <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="sendManual('${req.discordUser}', 'carl_bot')">
+                📩 Send Carl-bot Manual
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 7. Toggle Admin Tasks
+    async function toggleAdminTask(ticketCode, taskId, completed) {
+      const req = localRequests.find(r => r.ticketCode === ticketCode);
+      if (!req) return;
+
+      const task = req.checklist.find(t => t.id === taskId);
+      if (task) task.completed = completed;
+
+      const completedCount = req.checklist.filter(t => t.completed).length;
+      req.progressPercent = Math.round((completedCount / req.checklist.length) * 100);
+
+      renderAdminRequests();
+
+      // Send update to backend server.js
+      fetch('/api/admin/update-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketCode, taskId, completed })
+      }).catch(err => console.error("Admin sync error:", err));
+    }
+
+    // 8. Send Manual via Bot REST API
+    async function sendManual(discordUser, manualKey) {
+      alert(`🌹 Dispatching ${manualKey} manual to @${discordUser} via Bot DM...`);
+      fetch('/api/admin/send-manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientDiscordId: discordUser, manualKey })
+      }).catch(err => console.error("Manual dispatch error:", err));
+    }
+  </script>
+</body>
+</html>
