@@ -1,0 +1,24 @@
+// Example form submission snippet inside your index.html script:
+async function handleFormSubmit(event) {
+  event.preventDefault();
+
+  const formData = {
+    discordUser: document.getElementById('discordUser').value,
+    serverName: document.getElementById('serverName').value,
+    serviceType: document.getElementById('serviceType').value,
+    serverCategory: document.getElementById('serverCategory').value,
+    selectedBots: Array.from(document.querySelectorAll('input[name="bots"]:checked')).map(el => el.value),
+    extraNotes: document.getElementById('extraNotes').value
+  };
+
+  const response = await fetch('/api/request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+  });
+
+  const result = await response.json();
+  if (result.success) {
+    alert(`🌹 Request Submitted! Your Ticket Code is: ${result.ticketCode}\n\n${result.instructions}`);
+  }
+}
